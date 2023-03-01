@@ -1,0 +1,11 @@
+name = "PowerModelsSecurityConstrainedUtils"
+uuid = "1f517646-d7ec-4d65-ab60-45ca177afdfe"
+authors = ["Juan Luis Barberia <jbarberia@frba.utn.edu.ar>"]
+version = "0.1.0"
+
+[deps]
+Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
+PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
+PowerModelsSecurityConstrained = "53333297-f92c-5019-980b-942fc744b407"
+PyCall = "438e738f-606a-5dbb-bf0a-cddfbfd45ab0"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
