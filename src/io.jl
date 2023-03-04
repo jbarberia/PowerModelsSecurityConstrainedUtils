@@ -78,3 +78,18 @@ function read_solution_2(data, filename)
     rm(tempfile)
     return data_solution
 end
+
+"Return a tuple with the files"
+function get_input_files(directory)
+    !isfile("$directory/case.con") && error("case.con does not exist in $directory")
+    !isfile("$directory/case.inl") && error("case.inl does not exist in $directory")
+    !isfile("$directory/case.raw") && error("case.raw does not exist in $directory")
+    !isfile("$directory/case.rop") && error("case.rop does not exist in $directory")
+
+    return (;
+        con = "$directory/case.con",
+        inl = "$directory/case.inl",
+        raw = "$directory/case.raw",
+        rop = "$directory/case.rop",
+    )
+end
