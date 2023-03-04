@@ -38,6 +38,12 @@ end
 end
 
 @testset "Evaluation" begin
+    @testset "base case" begin
+        solution_file_1 = "scenario_1/solution1.txt"
+        df = evaluate_solution(solution_file_1; output_file="details.csv", scenario="scenario_1/", return_df=true)
+        @test size(df) == (1, 37)
+    end
+
     @testset "full solution with df" begin
         solution_file_1 = "scenario_1/solution1.txt"
         solution_file_2 = "scenario_1/solution2.txt"

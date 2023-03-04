@@ -1,16 +1,25 @@
 """
-evaluate_solution(solution_file_1, solution_file_2=nothing; output_file="details.csv", scenario="", return_df=false)
+evaluate_solution(solution_file_1; output_file="details.csv", scenario="", return_df=false)
 
 - Read a solution_1 file and returns it evaluation in ´output_file´
+"""
+function evaluate_solution(solution_file_1; output_file="details.csv", scenario="", return_df=false)
+    input_files = get_input_files(scenario)
+    solution_file_2 = "none"
+    run(`python $(MODULE_DIR)/Evaluation/test_solution_1.py $(input_files.raw) $(input_files.rop) $(input_files.con) $(input_files.inl) $(solution_file_1) $(solution_file_2) summary $(output_file)`)
+    if return_df
+        return DataFrame(CSV.File(output_file))        
+    end
+end
+
+"""
+evaluate_solution(solution_file_1, solution_file_2; output_file="details.csv", scenario="", return_df=false)
+
 - Read a solution_1 and solution_2 file and return it evaluation in ´output_file´
 - If return_df = true the solution is parsed as a DataFrame
 """
-function evaluate_solution(solution_file_1, solution_file_2=nothing; output_file="details.csv", scenario="", return_df=false)
+function evaluate_solution(solution_file_1, solution_file_2; output_file="details.csv", scenario="", return_df=false)
     input_files = get_input_files(scenario)
-
-    if solution_file_2 === nothing
-        run(`python $(MODULE_DIR)/Evaluation/test_solution_1.py $(input_files.raw) $(input_files.rop) $(input_files.con) $(input_files.inl) $(solution_file_1) $(solution_file_2) summary $(output_file)`)
-    end
     
     if is_partial_solution_2(solution_file_2, scenario)
         contingency_file = read("$scenario/case.con", String)
