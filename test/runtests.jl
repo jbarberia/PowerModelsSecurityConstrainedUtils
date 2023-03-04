@@ -1,4 +1,5 @@
 using Test
+using DataFrames
 using PowerModelsSecurityConstrainedUtils
 
 
@@ -69,4 +70,11 @@ end
     end
 
     rm("details.csv")
+end
+
+@testset "Dataframe creation" begin
+    data = parse_directory("scenario_1/")
+    df = to_dataframe(data["bus"])
+    @test df isa DataFrame
+    @test size(df) == (500, 15)
 end
