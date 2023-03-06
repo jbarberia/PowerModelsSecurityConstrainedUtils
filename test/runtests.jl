@@ -78,3 +78,21 @@ end
     @test df isa DataFrame
     @test size(df) == (500, 15)
 end
+
+@testset "functions to compute evaluation" begin
+    data = parse_directory("scenario_1/")
+    solution_1 = read_solution_1(data, "scenario_1/solution1.txt")
+    
+    @testset "violations" begin
+        bounds_violations = compute_bounds_violations(data)
+        flow_violations = compute_flow_violations(data)
+    end
+
+    @testset "power balance" begin
+        power_balance_violations = compute_power_balance_violations(data)
+        max_p_delta = maximum([abs(bus["p_delta"]) for (i, bus) in power_balance_violations["bus"]])
+        max_q_delta = maximum([abs(bus["q_delta"]) for (i, bus) in power_balance_violations["bus"]])
+        @test max_p_delta <= 1e-4
+        @test max_q_delta <= 1e-4
+    end
+end

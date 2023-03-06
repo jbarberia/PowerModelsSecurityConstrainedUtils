@@ -52,3 +52,83 @@ function is_partial_solution_2(solution_file, scenario)
     contingencies_in_solution = length(collect(eachmatch(r"-- contingency", read(solution_file, String))))
     return contingencies_in_case != contingencies_in_solution
 end
+
+"""
+compute the bounds of vm, pg, qg and bs.
+returns a dictionary.
+"""
+function compute_bounds_violations(data::Dict{String, Any})::Dict{String, Any}
+    violations = Dict()
+    violations["bus"] = Dict()
+    violations["gen"] = Dict()
+    violations["shunt"] = Dict()
+
+    for (i, bus) in data["bus"]
+        bus["bus_type"] == 4 && continue
+        upper_violation = max(0, bus["vm"] - bus["vmax"])
+        lower_violation = max(0, bus["vmin"] - bus["vm"])
+        violations["bus"][i] = Dict("vm_vio" => max(upper_violation, lower_violation))
+    end
+
+    for (i, gen) in data["gen"]
+        gen["gen_status"] == 0 && continue
+        violations["gen"][i] = Dict()
+        # active power
+        upper_violation = max(0, gen["pg"] - gen["pmax"])
+        lower_violation = max(0, gen["pmin"] - gen["pg"])
+        violations["gen"][i]["pg_vio"] = max(upper_violation, lower_violation)
+        # reactive power
+        upper_violation = max(0, gen["qg"] - gen["qmax"])
+        lower_violation = max(0, gen["qmin"] - gen["qg"])
+        violations["gen"][i]["qg_vio"] = max(upper_violation, lower_violation)
+    end
+
+    for (i, shunt) in data["shunt"]
+        !haskey(shunt, "bmax") && continue
+        !haskey(shunt, "bmin") && continue
+        upper_violation = max(0, shunt["bs"] - shunt["bmax"])
+        lower_violation = max(0, shunt["bmin"] - shunt["bs"])
+        violations["shunt"][i] = Dict("b_vio" => max(upper_violation, lower_violation))
+    end
+
+    violations["baseMVA"] = data["baseMVA"]
+    violations["per_unit"] = true
+    return violations
+end
+
+"""compute the associate slack value of the branch flow violations"""
+function compute_flow_violations(data, rate="rate_a")::Dict{String, Any}
+    flows = calc_c1_branch_flow_ac(data)["branch"]
+    violations = Dict()
+    for (i, branch) in data["branch"]
+        branch["br_status"] == 0 && continue
+        !haskey(branch, rate) && continue
+        rate = branch[rate]
+        sf = sqrt(flows[i]["pf"]^2 + flows[i]["qf"]^2)
+        st = sqrt(flows[i]["pt"]^2 + flows[i]["qt"]^2)
+
+        if branch["transformer"]
+            violations[i] = max(sf, st) - rate
+        else
+            vm_f = data["bus"]["$(branch[string(:f_bus)])"]["vm"]
+            vm_t = data["bus"]["$(branch[string(:t_bus)])"]["vm"]
+            violations[i] = max(sf/vm_f, st/vm_t) - rate
+        end
+    end
+
+    return Dict(
+        "baseMVA" => data["baseMVA"],
+        "per_unit" => true,
+        "branch" => violations
+        )
+end
+
+"""Compute mismatch of P and Q. The keys are p_deltas and q_deltas"""
+function compute_power_balance_violations(data::Dict{String, Any})::Dict{String, Any}
+    data = copy(data)
+    flows = calc_c1_branch_flow_ac(data)
+    update_data!(data, flows)
+    balance_violations = calc_power_balance(data)
+
+    return balance_violations
+end

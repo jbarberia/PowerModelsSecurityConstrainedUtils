@@ -14,7 +14,7 @@ end
 include("io.jl")
 include("evaluation.jl")
 include("data_structures.jl")
-export parse_directory, write_solution_1, write_solution_2, read_solution_1, read_solution_2, merge_solutions_2, evaluate_solution, to_dataframe
+export parse_directory, write_solution_1, write_solution_2, read_solution_1, read_solution_2, merge_solutions_2, evaluate_solution, to_dataframe, compute_bounds_violations, compute_flow_violations, compute_power_balance_violations
 
 
 end
