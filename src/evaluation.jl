@@ -1,7 +1,8 @@
 """
-evaluate_solution(solution_file_1; output_file="details.csv", scenario="", return_df=false)
+    evaluate_solution(solution_file_1; output_file="details.csv", scenario="", return_df=false)
 
-- Read a solution_1 file and returns it evaluation in ´output_file´
+Read a `solution_1` file and returns it evaluation in `output_file`.
+If `return_df=true` parses the `output_file` to a `DataFrame`.
 """
 function evaluate_solution(solution_file_1; output_file="details.csv", scenario="", return_df=false)
     input_files = get_input_files(scenario)
@@ -13,10 +14,14 @@ function evaluate_solution(solution_file_1; output_file="details.csv", scenario=
 end
 
 """
-evaluate_solution(solution_file_1, solution_file_2; output_file="details.csv", scenario="", return_df=false)
+    evaluate_solution(solution_file_1, solution_file_2; output_file="details.csv", scenario="", return_df=false)
 
-- Read a solution_1 and solution_2 file and return it evaluation in ´output_file´
-- If return_df = true the solution is parsed as a DataFrame
+Read a `solution_1` and a `solution_2` file and returns it evaluation in `output_file`.
+If `return_df=true` parses the `output_file` to a `DataFrame`.
+
+The `solution_file_2` could be a single contingency solution file or a merge of differents contingencies.
+
+This function make a tempfile of the `case.con` file in order to match the requirements of the ARPA official evaluation script.
 """
 function evaluate_solution(solution_file_1, solution_file_2; output_file="details.csv", scenario="", return_df=false)
     input_files = get_input_files(scenario)
@@ -54,8 +59,9 @@ function is_partial_solution_2(solution_file, scenario)
 end
 
 """
-compute the bounds of vm, pg, qg and bs.
-returns a dictionary.
+    compute_bounds_violations(data::Dict{String, Any})::Dict{String, Any}
+
+Compute the bounds of `vm`, `pg`, `qg` and `bs`.
 """
 function compute_bounds_violations(data::Dict{String, Any})::Dict{String, Any}
     violations = Dict()
@@ -96,7 +102,11 @@ function compute_bounds_violations(data::Dict{String, Any})::Dict{String, Any}
     return violations
 end
 
-"""compute the associate slack value of the branch flow violations"""
+"""
+    compute_flow_violations(data, rate="rate_a")::Dict{String, Any}
+
+Compute the associate slack value of the branch flow violations.
+"""
 function compute_flow_violations(data, rate="rate_a")::Dict{String, Any}
     flows = calc_c1_branch_flow_ac(data)["branch"]
     violations = Dict()
@@ -123,7 +133,12 @@ function compute_flow_violations(data, rate="rate_a")::Dict{String, Any}
         )
 end
 
-"""Compute mismatch of P and Q. The keys are p_deltas and q_deltas"""
+"""
+    compute_power_balance_violations(data::Dict{String, Any})::Dict{String, Any}
+
+Compute mismatch of P and Q on every bus. 
+The keys are `p_deltas` and `q_deltas`.
+"""
 function compute_power_balance_violations(data::Dict{String, Any})::Dict{String, Any}
     data = copy(data)
     flows = calc_c1_branch_flow_ac(data)

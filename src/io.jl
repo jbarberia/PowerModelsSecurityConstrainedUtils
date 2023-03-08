@@ -1,4 +1,6 @@
 """
+    parse_directory(directory::String)
+
 Parses a directory with the `case.con`, `case.inl`, `case.raw`, `case.rop`, files
 """
 function parse_directory(directory::String)
@@ -12,16 +14,23 @@ function parse_directory(directory::String)
     return data
 end
 
-"""Writes a solution 1 file according to ARPA-E requirements"""
+"""
+    write_solution_1(data::Dict{String, Any}, filename::String)
+
+Writes a solution 1 file according to ARPA-E requirements
+"""
 function write_solution_1(data::Dict{String, Any}, filename::String)
     PowerModelsSecurityConstrained.write_c1_solution1(data; solution_file=filename)
 end
 
 """
+    write_solution_2(data::Dict{String, Any}, filename::String)
+
 Writes a single solution 2 file according to ARPA-E requirements.
 
 *Notes*:
-- The data dictionary must have a field "delta" on its root, else is gonna be zero.
+- The data dictionary must have a field `delta` on its root, else is gonna be zero.
+- The data dictionary must have a field `label` wit the contingency label.
 """
 function write_solution_2(data::Dict{String, Any}, filename::String)
     if !haskey(data, "delta")
@@ -38,6 +47,12 @@ function write_solution_2(data::Dict{String, Any}, filename::String)
     end
 end
 
+"""
+    merge_solutions_2(filenames::Vector{String}, filename::String="solution_2.txt")
+
+Given a list of contingencies filenames, reads it and merge into `filename` 
+
+"""
 function merge_solutions_2(filenames::Vector{String}, filename::String="solution_2.txt")
     open(filename, "w") do io
         for file in filenames
@@ -46,11 +61,38 @@ function merge_solutions_2(filenames::Vector{String}, filename::String="solution
     end
 end
 
-function read_solution_1(data, filename)
+"""
+    read_solution_1(data::Dict{String, Any}, filename::String)
+
+Reads a solution 1 file and returns a `Dict`.
+
+Usage:
+```julia
+    data = parse_directory("scenario")
+    solution_1 = read_solution_1(data, "solution_1.txt")
+    update_data!(data, solution_1)
+```
+"""
+function read_solution_1(data::Dict{String, Any}, filename::String)
     return PowerModelsSecurityConstrained.read_c1_solution1(data; state_file=filename)
 end
 
-function read_solution_2(data, filename)
+"""
+    read_solution_2(data::Dict{String, Any}, filename::String)
+
+Reads a solution 2 file and returns a `Dict`.
+Do not turn out of service any component.
+
+The idea of this function is to have a quickly workaround to check solution parameters.
+
+Usage:
+```julia
+    data = parse_directory("scenario")
+    solution_2 = read_solution_2(data, "solution_2.txt")
+    update_data!(data, solution_2)
+```
+"""
+function read_solution_2(data::Dict{String, Any}, filename::String)
     local contingency_label
     local delta
     local tempfile

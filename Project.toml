@@ -6,6 +6,7 @@ version = "0.1.0"
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 Infiltrator = "5903a43b-9cc3-4c30-8d17-598619ec4e9b"
 PowerModels = "c36e90e8-916a-50a6-bd94-075b64ef4655"
 PowerModelsSecurityConstrained = "53333297-f92c-5019-980b-942fc744b407"
