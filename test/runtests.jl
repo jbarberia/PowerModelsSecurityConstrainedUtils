@@ -14,6 +14,18 @@ end
     solution_1 = read_solution_1(data, "scenario_1/solution1.txt")
     solution_2 = read_solution_2(data, "scenario_1/single_solution2.txt")
 
+    @testset "read single solution file" begin
+        solution_2 = read_solution_2(data, "scenario_1/single_solution2.txt")
+        @test length(solution_2["bus"]) == 500
+        @test solution_2["label"] == "G_000272NORTHPORT31U1"
+    end
+
+    @testset "read specific solution file" begin
+        solution_2 = read_solution_2(data, "scenario_1/solution2.txt", "G_000272NORTHPORT31U1")
+        @test length(solution_2["bus"]) == 500
+        @test solution_2["label"] == "G_000272NORTHPORT31U1"
+    end
+
     @testset "write c1 solution" begin
         filename = "solution_1.txt"
         write_solution_1(data, filename)

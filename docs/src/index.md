@@ -30,6 +30,10 @@ read_solution_1(data::Dict{String, Any}, filename::String)
 read_solution_2(data::Dict{String, Any}, filename::String)
 ```
 
+```@docs
+read_solution_2(data::Dict{String, Any}, filename::String, contingency::String)
+```
+
 # Evaluation
 It is done trough the official ARPA evaluation script [(repo-here)](https://github.com/GOCompetition/Evaluation).
 

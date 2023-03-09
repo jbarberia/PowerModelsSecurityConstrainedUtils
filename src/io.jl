@@ -77,10 +77,11 @@ function read_solution_1(data::Dict{String, Any}, filename::String)
     return PowerModelsSecurityConstrained.read_c1_solution1(data; state_file=filename)
 end
 
+using Infiltrator
 """
     read_solution_2(data::Dict{String, Any}, filename::String)
 
-Reads a solution 2 file and returns a `Dict`.
+Reads a *single* solution 2 file and returns a `Dict`.
 Do not turn out of service any component.
 
 The idea of this function is to have a quickly workaround to check solution parameters.
@@ -107,16 +108,52 @@ function read_solution_2(data::Dict{String, Any}, filename::String)
             r"-- delta section\ndelta\(MW\)[\r\n]+([^\r\n]+)"m,
             solution
         ).captures[1]
-        solution_state = 4
         tempfile = tempname()
+        lines = split(solution, "\n")
         open(tempfile, "w") do io
-            write(io, solution_state)
+            for line in lines[4:end-4]
+                write(io, "$line\n")
+            end
         end
     end
     
     data_solution = read_solution_1(data, tempfile)
     data_solution["label"] = contingency_label
     data_solution["delta"] = parse(Float64, delta)
+    rm(tempfile)
+    return data_solution
+end
+
+"""
+    read_solution_2(data::Dict{String, Any}, filename::String, contingency::String)
+
+Reads a *full* solution 2 file and extract the given contingency and returns a `Dict`.
+Do not turn out of service any component.
+
+The idea of this function is to have a quickly workaround to check solution parameters.
+
+Usage:
+```julia
+    data = parse_directory("scenario")
+    solution_2 = read_solution_2(data, "solution_2.txt", "contingency_label")
+    update_data!(data, solution_2)
+```
+"""
+function read_solution_2(data::Dict{String, Any}, filename::String, contingency::String)
+    local contingency_label
+    local delta
+    tempfile = tempname()
+    
+    open(filename, "r") do io
+        solutions = read(io, String)
+        regex_filter = Regex("(?s)-- contingency\nlabel\n$(contingency).*?(?=-- contingency)", "m")
+        selected_solution = match(regex_filter, solutions).match
+        open(tempfile, "w") do outfile
+            write(outfile, selected_solution)
+        end
+    end
+    
+    data_solution = read_solution_2(data, tempfile)
     rm(tempfile)
     return data_solution
 end
