@@ -61,7 +61,7 @@ end
 """
     compute_bounds_violations(data::Dict{String, Any})::Dict{String, Any}
 
-Compute the bounds of `vm`, `pg`, `qg` and `bs`.
+Compute the bounds of `vm`, `pg`, `qg` and `bs`. The output dict has the followings keys `vm_vio`, `pg_vio`, `qg_vio`, `bs_vio`
 """
 function compute_bounds_violations(data::Dict{String, Any})::Dict{String, Any}
     violations = Dict()
@@ -112,17 +112,19 @@ function compute_flow_violations(data, rate="rate_a")::Dict{String, Any}
     violations = Dict()
     for (i, branch) in data["branch"]
         branch["br_status"] == 0 && continue
-        !haskey(branch, rate) && continue
-        rate = branch[rate]
+        ! haskey(branch, rate) && continue
+        rating = branch[rate]
         sf = sqrt(flows[i]["pf"]^2 + flows[i]["qf"]^2)
         st = sqrt(flows[i]["pt"]^2 + flows[i]["qt"]^2)
 
         if branch["transformer"]
-            violations[i] = max(sf, st) - rate
+            violations[i] = max(sf, st) - rating
+            violations[i] = max(0, violations[i])
         else
             vm_f = data["bus"]["$(branch[string(:f_bus)])"]["vm"]
             vm_t = data["bus"]["$(branch[string(:t_bus)])"]["vm"]
-            violations[i] = max(sf/vm_f, st/vm_t) - rate
+            violations[i] = max(sf/vm_f, st/vm_t) - rating
+            violations[i] = max(0, violations[i])
         end
     end
 

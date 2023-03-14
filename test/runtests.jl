@@ -98,6 +98,8 @@ end
     @testset "violations" begin
         bounds_violations = compute_bounds_violations(data)
         flow_violations = compute_flow_violations(data)
+        in_service_branch = filter(x -> x.second["br_status"] != 0 ,data["branch"])
+        @test length(flow_violations["branch"]) == length(in_service_branch)
     end
 
     @testset "power balance" begin
