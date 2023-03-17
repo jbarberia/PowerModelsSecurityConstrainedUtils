@@ -149,3 +149,50 @@ function compute_power_balance_violations(data::Dict{String, Any})::Dict{String,
 
     return balance_violations
 end
+
+"""
+    compute_penalty(data::Dict{String, Any})
+
+Return the penalty term according to ARPA-E without any weight factor.
+"""
+function compute_penalty(data::Dict{String, Any}, rating="rate_a")
+    penalty_block_pow_real_max = [2.0, 50.0] # MW. when converted to p.u., this is overline_sigma_p in the formulation
+    penalty_block_pow_real_coeff = [1000.0, 5000.0, 1000000.0] # USD/MW-h. when converted USD/p.u.-h this is lambda_p in the formulation
+    penalty_block_pow_imag_max = [2.0, 50.0] # MVar. when converted to p.u., this is overline_sigma_q in the formulation
+    penalty_block_pow_imag_coeff = [1000.0, 5000.0, 1000000.0] # USD/MVar-h. when converted USD/p.u.-h this is lambda_q in the formulation
+    penalty_block_pow_abs_max = [2.0, 50.0] # MVA. when converted to p.u., this is overline_sigma_s in the formulation
+    penalty_block_pow_abs_coeff = [1000.0, 5000.0, 1000000.0] # USD/MWA-h. when converted USD/p.u.-h this is lambda_s in the formulation
+
+    power_balance_violations = compute_power_balance_violations(data)
+    flow_violations = compute_flow_violations(data, rating)
+
+    max_power_balance_real_violation = maximum(bus["p_delta"] |> abs for (i, bus) in power_balance_violations["bus"])
+    max_power_balance_imag_violation = maximum(bus["q_delta"] |> abs for (i, bus) in power_balance_violations["bus"])
+    power_balance_real_penalty = eval_piecewise_linear_penalty(max_power_balance_real_violation, penalty_block_pow_real_max, penalty_block_pow_real_coeff)
+    power_balance_imag_penalty = eval_piecewise_linear_penalty(max_power_balance_imag_violation, penalty_block_pow_imag_max, penalty_block_pow_imag_coeff)
+    
+    max_flow_violation = maximum(violation for (i, violation) in flow_violations["branch"])
+    flow_penalty = eval_piecewise_linear_penalty(max_flow_violation, penalty_block_pow_abs_max, penalty_block_pow_abs_coeff)
+    
+    total_penalty = power_balance_real_penalty + power_balance_imag_penalty + flow_penalty
+
+    return total_penalty * data["baseMVA"]
+end
+
+function eval_piecewise_linear_penalty(violation, penalty_block_max, penalty_block_coeff, penalty=0)
+    if length(penalty_block_max) == 0 # last block
+        return penalty + penalty_block_coeff[end] * violation
+    end
+
+    if violation > penalty_block_max[1]
+        cumulative = penalty_block_max[1] * penalty_block_coeff[1]
+        return eval_piecewise_linear_penalty(
+            violation .- penalty_block_max[1],
+            penalty_block_max[2:end] .- penalty_block_max[1],
+            penalty_block_coeff[2:end],
+            penalty + cumulative
+        )
+    else
+        return penalty + penalty_block_coeff[1] * violation
+    end
+end

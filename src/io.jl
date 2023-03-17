@@ -77,7 +77,6 @@ function read_solution_1(data::Dict{String, Any}, filename::String)
     return PowerModelsSecurityConstrained.read_c1_solution1(data; state_file=filename)
 end
 
-using Infiltrator
 """
     read_solution_2(data::Dict{String, Any}, filename::String)
 
@@ -131,6 +130,8 @@ Reads a *full* solution 2 file and extract the given contingency and returns a `
 Do not turn out of service any component.
 
 The idea of this function is to have a quickly workaround to check solution parameters.
+
+Do not take out of service any component. This must be done manually.
 
 Usage:
 ```julia
