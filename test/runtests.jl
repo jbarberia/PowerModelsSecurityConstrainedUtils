@@ -92,6 +92,7 @@ end
     @test size(df) == (500, 15)
 end
 
+
 @testset "functions to compute evaluation" begin
     data = parse_directory("scenario_1/")
     solution_1 = read_solution_1(data, "scenario_1/solution1.txt")
@@ -127,6 +128,27 @@ end
         @test max_q_delta[2] == "413"
     end
 
+    @testset "pvpq switching violations" begin
+        data = parse_directory("scenario_1/")
+        solution_1 = read_solution_1(data, "scenario_1/solution1.txt")
+        update_data!(data, solution_1)
+        for (i, bus) in data["bus"]
+            bus["vm_base"] = bus["vm"]
+
+        end
+        solution_2 = read_solution_2(data, "scenario_1/solution2.txt", "L_000022ATMORE13-000405GANTT1C1")
+        contingency = [ctg for ctg in data["branch_contingencies"] if ctg.label == "L_000022ATMORE13-000405GANTT1C1"][1]
+        update_data!(data, solution_2)
+
+        pvpq_violations = compute_pv_pq_violations(data)
+        cumulative = 0
+        for (i, bus) in pvpq_violations["bus"]
+            cumulative += pvpq_violations["bus"][i]["pvpq_1"]
+            cumulative += pvpq_violations["bus"][i]["pvpq_2"]
+        end
+
+        @test cumulative <= 1.5e-15
+    end
     @testset "inner function piecewise linear" begin
         @test PowerModelsSecurityConstrainedUtils.eval_piecewise_linear_penalty(2, [3, 6], [1, 2, 5]) == 2
         @test PowerModelsSecurityConstrainedUtils.eval_piecewise_linear_penalty(5, [3, 6], [1, 2, 5]) == 7

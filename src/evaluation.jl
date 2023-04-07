@@ -151,6 +151,45 @@ function compute_power_balance_violations(data::Dict{String, Any})::Dict{String,
 end
 
 """
+    compute_PV_PQ_violations(data::Dict{String, Any})::Dict{String, Any}
+
+Check PV PQ violations. Use the key `vm_base` to check voltage deaviations.
+the key `pvpq_1` corresponds to the upper reactive part. 
+the key `pvpq_1` corresponds to the lower reactive part. 
+
+"""
+function compute_pv_pq_violations(data::Dict{String, Any})::Dict{String, Any}
+    qmax = Dict{String, Any}()
+    qmin = Dict{String, Any}()
+    qg = Dict{String, Any}()
+    for (i, gen) in data["gen"]
+        gen["gen_status"] == 0 && continue
+        bus_i = gen["gen_bus"] 
+        qmax["$bus_i"] = get(qmax, "$bus_i", 0) + gen["qmax"]
+        qmin["$bus_i"] = get(qmax, "$bus_i", 0) + gen["qmin"]
+        qg["$bus_i"] = get(qmax, "$bus_i", 0) + gen["qg"]
+    end
+
+    violations = Dict{String, Any}()
+    for (i, bus) in data["bus"]
+        !haskey(qg, i) && continue # skip non generator buses
+        vm_base = get(bus, "vm_base", bus["vm"])
+        vm = bus["vm"]
+        
+        pvpq_1 = min(max(0, vm - vm_base), max(0, qmax[i] - qg[i]))
+        pvpq_2 = min(max(0, vm_base - vm), max(0, qg[i] - qmin[i]))
+
+        violations[i] = Dict("pvpq_1" => pvpq_1, "pvpq_2" => pvpq_2)
+    end
+
+    return Dict(
+        "baseMVA" => data["baseMVA"],
+        "per_unit" => true,
+        "bus" => violations
+        )
+end
+
+"""
     compute_penalty(data::Dict{String, Any})
 
 Return the penalty term according to ARPA-E without any weight factor.
